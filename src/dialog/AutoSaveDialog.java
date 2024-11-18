@@ -1,45 +1,42 @@
 package dialog;
 
+import db_objs.TransactionQueueManager;
+import utils.Constant;
+
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.util.prefs.Preferences;
 
-public class AutoSaveDialog {
+public class AutoSaveDialog extends JDialog {
+    private final JCheckBox autoSaveCheckBox;
 
-    // To store user's auto-save preference
-    private static final String AUTO_SAVE_KEY = "auto_save_enabled";
+    public AutoSaveDialog(JFrame parent) {
+        setTitle("Settings");
+        setSize(300, 200);
+        setModal(true);
+        setLocationRelativeTo(parent);
+        setDefaultCloseOperation(DISPOSE_ON_CLOSE);
 
-    public static void showAutoSaveDialog() {
-        Preferences pref = Preferences.userNodeForPackage(AutoSaveDialog.class);
-        boolean isAutoSaveEnabled = pref.getBoolean(AUTO_SAVE_KEY, false);
-        if (isAutoSaveEnabled) {
-            return;
-        }
-        int option = JOptionPane.showConfirmDialog(
-                null,
-                "Would you like to enable auto-save?",
-                "Enable Auto-Save",
-                JOptionPane.YES_NO_OPTION
-        );
-        pref.putBoolean(AUTO_SAVE_KEY, option == JOptionPane.YES_OPTION);
+        JPanel panel = new JPanel();
+        panel.setLayout(new GridLayout(3, 1));
 
-        if (option == JOptionPane.YES_OPTION) {
-            startAutoSave();
-        }
-    }
+        autoSaveCheckBox = new JCheckBox("Enable Auto Save", Constant.isAutoSaveEnabled);
+        panel.add(autoSaveCheckBox);
 
-    private static void startAutoSave() {
-        new Thread(() -> {
-            while (true) {
-                try {
-                    Thread.sleep(100000);
-                    System.out.println("Auto-save triggered...");
-                } catch (InterruptedException e) {
-                    e.printStackTrace();
-                }
+        JButton saveButton = new JButton("Save Settings");
+        saveButton.setBounds(0, 0, 100, 30);
+        saveButton.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                Constant.isAutoSaveEnabled = autoSaveCheckBox.isSelected();
+                TransactionQueueManager.setAutoSaveEnabled(Constant.isAutoSaveEnabled);
+                System.out.println("Auto Save is " + (Constant.isAutoSaveEnabled ? "enabled" : "disabled"));
+                dispose();
             }
-        }).start();
+        });
+        panel.add(saveButton);
+        add(panel);
     }
+
 }

@@ -2,11 +2,17 @@ package guis;
 
 import db_objs.MyJDBC;
 import db_objs.User;
+import dialog.AutoSaveDialog;
+import utils.Constant;
 
+import javax.imageio.ImageIO;
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
+import java.awt.image.BufferedImage;
+import java.io.File;
+import java.io.IOException;
 
 public class LoginGuis extends BaseFrame{
     public LoginGuis() {
@@ -22,6 +28,16 @@ public class LoginGuis extends BaseFrame{
         bankLabel.setOpaque(true);
         bankLabel.setHorizontalAlignment(SwingConstants.CENTER);
         add(bankLabel);
+
+        JButton searchButton = new JButton(loadImage("src/assets/settings.png",true));
+        searchButton.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+        searchButton.setBounds(355, 75, 45, 45);
+        searchButton.addActionListener(e -> {
+            new AutoSaveDialog(this).setVisible(true);
+        });
+        add(searchButton);
+
+
 
         // username label
         JLabel usernameLabel = new JLabel("Username");
@@ -61,6 +77,8 @@ public class LoginGuis extends BaseFrame{
             User user = MyJDBC.validateLogin(username, password);
             if (user != null) {
                 new BankingAppGuis(user).setVisible(true);
+                System.out.println("Status:"+ Constant.isAutoSaveEnabled);
+
                 dispose();
                 // success dialog
                 JOptionPane.showMessageDialog(this, "Login successful", "Success", JOptionPane.INFORMATION_MESSAGE);
@@ -88,5 +106,22 @@ public class LoginGuis extends BaseFrame{
         add(registerLabel);
 
 
+    }
+
+    private ImageIcon loadImage(String path,boolean isSize) {
+        try {
+            BufferedImage image = ImageIO.read(new File(path));
+            if (isSize){
+                ImageIcon imageIcon = new ImageIcon(image);
+                Image img = imageIcon.getImage().getScaledInstance(20, 20, Image.SCALE_SMOOTH);
+                return new ImageIcon(img);
+            }
+            else {
+                return new ImageIcon(image);
+            }
+        }catch (IOException e){
+            e.printStackTrace();
+            return null;
+        }
     }
 }

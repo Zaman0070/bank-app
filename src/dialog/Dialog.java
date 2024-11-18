@@ -178,7 +178,7 @@ package dialog;
 
 import db_objs.MyJDBC;
 import db_objs.Transaction;
-import db_objs.TransactionQueue;
+import db_objs.TransactionQueueManager;
 import db_objs.User;
 import guis.BankingAppGuis;
 import javax.swing.*;
@@ -256,7 +256,7 @@ public class Dialog extends JDialog implements ActionListener {
         add(enterUserField);
     }
 
-    private void handleTransaction(String transactionType, float amount) {
+    public void handleTransaction(String transactionType, float amount) {
         Transaction transaction;
         if (transactionType.equalsIgnoreCase("Deposit")) {
             user.setCurrentBalance(user.getCurrentBalance().add(new BigDecimal(amount)));
@@ -265,21 +265,11 @@ public class Dialog extends JDialog implements ActionListener {
             user.setCurrentBalance(user.getCurrentBalance().subtract(new BigDecimal(amount)));
             transaction = new Transaction(user.getId(), transactionType, BigDecimal.valueOf(-amount), new Date());
         }
-
-        // Add task to queue
-        TransactionQueue.addTask(() -> {
-            if (MyJDBC.addTransactionToDb(transaction) && MyJDBC.updateCurrentBalance(user)) {
-                SwingUtilities.invokeLater(() -> {
-                    JOptionPane.showMessageDialog(this, transactionType + " successful", "Success", JOptionPane.INFORMATION_MESSAGE);
-                    resetFieldsAndUpdateCurrentBalance();
-                });
-            } else {
-                SwingUtilities.invokeLater(() -> {
-                    JOptionPane.showMessageDialog(this, transactionType + " failed", "Error", JOptionPane.ERROR_MESSAGE);
-                });
-            }
-        });
+        TransactionQueueManager.addTransactionToQueue(transaction, user);
+        JOptionPane.showMessageDialog(this, transactionType + " successful", "Success", JOptionPane.INFORMATION_MESSAGE);
+        resetFieldsAndUpdateCurrentBalance();
     }
+
 
     private void resetFieldsAndUpdateCurrentBalance() {
         enterAmountField.setText("");
@@ -291,19 +281,15 @@ public class Dialog extends JDialog implements ActionListener {
     }
 
     private void handleTransfer(User user, String transferUser, float amount) {
-        // Add transfer task to queue
-        TransactionQueue.addTask(() -> {
-            if (MyJDBC.transfer(user, transferUser, amount)) {
-                SwingUtilities.invokeLater(() -> {
-                    JOptionPane.showMessageDialog(this, "Transfer successful", "Success", JOptionPane.INFORMATION_MESSAGE);
-                    resetFieldsAndUpdateCurrentBalance();
-                });
-            } else {
-                SwingUtilities.invokeLater(() -> {
-                    JOptionPane.showMessageDialog(this, "Transfer failed", "Error", JOptionPane.ERROR_MESSAGE);
-                });
-            }
-        });
+        boolean success = MyJDBC.transfer(user, transferUser, amount);
+        if (success) {
+            Transaction transaction = new Transaction(user.getId(), "Transfer", BigDecimal.valueOf(-amount), new Date());
+            TransactionQueueManager.addTransactionToQueue(transaction, user);
+            JOptionPane.showMessageDialog(this, "Transfer successful", "Success", JOptionPane.INFORMATION_MESSAGE);
+            resetFieldsAndUpdateCurrentBalance();
+        } else {
+            JOptionPane.showMessageDialog(this, "Transfer failed", "Error", JOptionPane.ERROR_MESSAGE);
+        }
     }
 
         public void pastTransactionComponents(){
