@@ -22,10 +22,11 @@ public class AutoSaveDialog extends JDialog {
         panel.setLayout(new GridLayout(3, 1));
 
         autoSaveCheckBox = new JCheckBox("Enable Auto Save", Constant.isAutoSaveEnabled);
+        autoSaveCheckBox.setBounds(0, 100, 60, 30);
         panel.add(autoSaveCheckBox);
 
         JButton saveButton = new JButton("Save Settings");
-        saveButton.setBounds(0, 0, 100, 30);
+        saveButton.setBounds(0, 0, 60, 30);
         saveButton.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
